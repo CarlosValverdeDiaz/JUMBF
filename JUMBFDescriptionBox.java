@@ -15,14 +15,12 @@ public class JUMBFDescriptionBox extends Box {
     private int Id; //This optional field contains a user assigned unique 4-byte Id that can be used for binary references to this JUMBF box.
     private byte[] Signature; //This optional field shall contain an SHA-256 (FIPS PUB 180-4) checksum of the JUMBF Content.
     private int Size = 25; //Size calculation
-    private boolean isRequestable = false;
     
     public JUMBFDescriptionBox(UUID type, byte toggles, String label, int id) throws Exception {
         super.setType(Common.Values.JUMBF_jumd);
         ContentType = type;
         Toggles = toggles;
         if((Toggles | 0b0001) == Toggles) {
-            this.isRequestable = true;
         }
         if((Toggles | 0b0010) == Toggles) {
             this.Label = label;
@@ -43,9 +41,6 @@ public class JUMBFDescriptionBox extends Box {
         super.setType(Common.Values.JUMBF_jumd);
         ContentType = type;
         Toggles = toggles;
-        if((Toggles | 0b0001) == Toggles) {
-            this.isRequestable = true;
-        }
     }
 
     public UUID getContentType() {

@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
  * @author carlos
  */
 public class Box implements JPEGXTBox{
-
     private int LBox;
     private int TBox;
     private long XLBox;

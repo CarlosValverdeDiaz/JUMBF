@@ -1,7 +1,6 @@
 package JPEGXTBox;
 
 import java.io.ByteArrayOutputStream;
-import javax.sql.CommonDataSource;
 
 /**
  *

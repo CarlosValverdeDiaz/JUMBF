@@ -64,8 +64,7 @@ public class JUMBFSuperBox extends Box{
     @Override
     public byte[] getXTBoxData() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //baos.write(allocateData(this.getLBox()));
-        //baos.write(allocateData(this.getType()));
+
         //DescriptionBox Type
         baos.write(allocateData(this.getDescriptionBox().getLBox()));
         baos.write(allocateData(this.getDescriptionBox().getType()));
@@ -81,14 +80,7 @@ public class JUMBFSuperBox extends Box{
         baos.write(allocateData(this.getDescriptionBox().getId()));
         //Signature
         baos.write(allocateData(this.getDescriptionBox().getSignature()));
-        //Content Type
-//        baos.write(allocateData(this.getContentBox().getLBox()));
-//        baos.write(allocateData(this.getContentBox().getType()));
-//        if (this.getContentBox().getLBox() == 1) {
-//            baos.write(allocateData(this.getXLBox()));
-//        }
-//        baos.write(allocateData(this.getContentBox().getContentData()));
-//        System.out.println(this.getDescriptionBox().getLabel() + ": " + this.getContentBox().getLBox() + " vs " + this.getLBox());
+        //Content Box
         baos.write(allocateData(this.getContentBox().getXTBoxData()));
 
         return baos.toByteArray();

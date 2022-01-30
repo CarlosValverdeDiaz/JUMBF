@@ -7,12 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.UUID;
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,62 +17,8 @@ import javax.swing.JLabel;
  * @author carlos
  */
 public class JUMBFUtils {
-    protected static class dataStructure {
-        private int offset;
-        private int type;
-        private char[] charArray;
-        
-        protected dataStructure() {
-            
-        }
-        
-        protected int getOffset() {
-            return this.offset;
-        }
-        
-        protected int getType() {
-            return this.type;
-        }
-        
-        protected char[] getCharArray() {
-            return this.charArray;
-        }
-        
-        private void setOffset(int offset) {
-            this.offset = offset;
-        }
-        
-        private void setType(int type) {
-            this.type = type;
-        }
-        
-        private void setCharArray(char[] charArray) {
-            this.charArray = charArray;
-        }
-    }
-    
-    private dataStructure parseSegment(Object... param) {
-        byte[] data = (byte[]) param[0];
-        int dataLength = (int) param[1];
-        int offset = (int) param[2];
-        
-        dataStructure ds = new dataStructure();
-        
-        char[] buffer = new char[dataLength];
-        int boxType = 0;
-
-        for (int i = 0; i < dataLength; i++) {
-            buffer[i] = (char) data[offset];
-            boxType += (int) ((int) buffer[i] * Math.pow(16, (6 - 2*i)));
-            offset++;
-        }
-        
-        ds.setOffset(offset);
-        ds.setType(boxType);
-        ds.setCharArray(buffer);
-        
-        return ds;
-    }
+    private final String folderName = "/home/carlos/Testfiles/";
+    private final String mergeFileName = "/home/carlos/Escritorio/codestream-parser-master/merge.jpeg";
     
     private int mergeInt(int radix, int shift, int... a) {
         int result = 0;
@@ -112,9 +53,7 @@ public class JUMBFUtils {
         return bytes;
     }
     
-    public JUMBFSuperBox shapeJUMBFSuperBox(byte[] data) throws Exception {
-        dataStructure ds = new dataStructure();
-        
+    public JUMBFSuperBox shapeJUMBFSuperBox(byte[] data) throws Exception {       
         StringBuilder sb = new StringBuilder();
         StringBuilder sb1 = new StringBuilder();
         StringBuilder sb2 = new StringBuilder();
@@ -158,11 +97,9 @@ public class JUMBFUtils {
             throw new Exception("Not JUMBFDescriptionBox " + boxType);
         }
         
-        //UUID
-        ds = parseSegment(data, 4, offset);
-        
-        boxType = ds.getType();
-        offset = ds.getOffset() + 12;
+        //UUID        
+        boxType = this.getIntFromBytes(allocateBytes(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]));
+        offset += 16;
         
         switch (boxType) {
             case Common.Values.JUMBF_xml:
@@ -209,6 +146,7 @@ public class JUMBFUtils {
             label = sb.toString();
             offset++;
             descriptionBox.setLabel(label);
+            System.out.println(label);
         }
         if((toggles | 0b0100) == toggles) {
             //ID
@@ -272,44 +210,6 @@ public class JUMBFUtils {
         box.addData(baos.toByteArray());
                 
         return box;
-    }
-    
-    public LinkedList<JUMBFSuperBox> separateJUMBF(byte[] data) throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        LinkedList<JUMBFSuperBox> jumbfs = new LinkedList<>();
-        int boxLength = 0;
-        int offset = 0;
-        
-        while(offset < data.length) {
-            if ((Byte.toUnsignedInt(data[offset]) == 0x6a
-                    && Byte.toUnsignedInt(data[offset + 1]) == 0x70
-                    && Byte.toUnsignedInt(data[offset + 2]) == 0x32
-                    && Byte.toUnsignedInt(data[offset + 3]) == 0x63)
-                    || (Byte.toUnsignedInt(data[offset]) == 0x78
-                    && Byte.toUnsignedInt(data[offset + 1]) == 0x6d
-                    && Byte.toUnsignedInt(data[offset + 2]) == 0x6c
-                    && Byte.toUnsignedInt(data[offset + 3]) == 0x20)
-                    || (Byte.toUnsignedInt(data[offset]) == 0x6a
-                    && Byte.toUnsignedInt(data[offset + 1]) == 0x73
-                    && Byte.toUnsignedInt(data[offset + 2]) == 0x6f
-                    && Byte.toUnsignedInt(data[offset + 3]) == 0x6e)
-                    || (Byte.toUnsignedInt(data[offset]) == 0x75
-                    && Byte.toUnsignedInt(data[offset + 1]) == 0x75
-                    && Byte.toUnsignedInt(data[offset + 2]) == 0x69
-                    && Byte.toUnsignedInt(data[offset + 3]) == 0x64)
-                    || (Byte.toUnsignedInt(data[offset]) == 0x62
-                    && Byte.toUnsignedInt(data[offset + 1]) == 0x69
-                    && Byte.toUnsignedInt(data[offset + 2]) == 0x64
-                    && Byte.toUnsignedInt(data[offset + 3]) == 0x62)) {
-                boxLength = this.getIntFromBytes(allocateBytes(data[offset - 4], data[offset - 3], data[offset - 2], data[offset - 1]));
-                baos.write(data, offset - 4, boxLength);
-                offset += boxLength;
-                jumbfs.add(this.shapeJUMBFSuperBox(baos.toByteArray()));
-            } else {
-                offset++;
-            }
-        }
-        return jumbfs;
     }
     
     public byte[] getBoxesFromFile(String s) throws Exception {
@@ -379,16 +279,24 @@ public class JUMBFUtils {
             
             ImageIcon image = new ImageIcon(data);
             
-            if (image.getIconWidth() > 1500) {
-                int width = 1200;
-                int height = image.getIconHeight()*width/image.getIconWidth();
-                Image aux = new ImageIcon(data).getImage();
-                Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
-                label.setIcon(new ImageIcon(scaled));
+            if (image.getIconHeight() > 900 || image.getIconWidth() > 1500) {
+                if (image.getIconWidth() > image.getIconHeight()) {
+                    int width = 1500;
+                    int height = image.getIconHeight()*width/image.getIconWidth();
+                    Image aux = new ImageIcon(data).getImage();
+                    Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
+                    label.setIcon(new ImageIcon(scaled));
+                } else {
+                    int height = 900;
+                    int width = image.getIconWidth()*height/image.getIconHeight();
+                    Image aux = new ImageIcon(data).getImage();
+                    Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
+                    label.setIcon(new ImageIcon(scaled));
+
+                }
             } else {
                 label.setIcon(image);
             }
-            
             
             frame.add(label);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -433,7 +341,7 @@ public class JUMBFUtils {
         byte[] image = Files.readAllBytes(Paths.get(imageName));
         byte[] jumbf = Files.readAllBytes(Paths.get(fileName));
         
-        File file = new File("/home/carlos/Escritorio/codestream-parser-master/merge.jpeg");
+        File file = new File(mergeFileName);
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
@@ -468,7 +376,7 @@ public class JUMBFUtils {
     }
     
     public void JUMBFToBox(JUMBFSuperBox superBox, String fileName, short boxInstance) throws Exception {        
-        String s = new String("/home/carlos/Testfiles/" + fileName + ".jumbf");
+        String s = new String(folderName + fileName + ".jumbf");
         File file = new File(s);
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -495,10 +403,10 @@ public class JUMBFUtils {
             //XLBox length
             localSpan = Common.Values.XT_BOX_MAX_DATA - Common.Values.XT_BOX_HEADER_LENGTH - 1 - 8;
             
-            while (length != 0) {
+            while (!lastBox) {
                 numBoxes++;
-                if (box.getXTBoxData().length < localSpan) {
-                    length = 0;
+                if (length < localSpan) {
+                    lastBox = !lastBox;
                 } else {
                     length -= localSpan;
                 }
@@ -524,6 +432,7 @@ public class JUMBFUtils {
         } else {
             //LBox length
             localSpan = Common.Values.XT_BOX_MAX_DATA - Common.Values.XT_BOX_HEADER_LENGTH - 1;
+            
             while (!lastBox) {
                 numBoxes++;
                 if (length < localSpan) {
@@ -542,6 +451,7 @@ public class JUMBFUtils {
                     contentBoxes[i] = new SuperBox((short) (Common.Values.XT_BOX_MAX_DATA - 1), boxInstance, i, (int) length + 8, box.getType(), contentBuilder.toByteArray());
                     contentBuilder.reset();
                     offset += localSpan;
+                    System.out.println("Box Instance: " + boxInstance + " Packet Sequence: " + i);
 
                 } else {
                     contentBuilder.write(box.getXTBoxData(), offset, (int) box.getXTBoxData().length - offset);
