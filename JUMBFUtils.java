@@ -3,11 +3,17 @@ package JUMBF;
 import JPEGXTBox.SuperBox;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -17,9 +23,36 @@ import javax.swing.JLabel;
  * @author carlos
  */
 public class JUMBFUtils {
-    private final String folderName = "/home/carlos/Testfiles/";
-    private final String mergeFileName = "/home/carlos/Escritorio/codestream-parser-master/merge.jpeg";
+    private final String propertiesPath = "/home/carlos/NetBeansProjects/JUMBFLibrary/src/Common/";
+    Properties properties = new Properties();
+    public final String folderName;
+    public final String mergeFileName;
+    public final int ImageMaxWidth;
+    public final int ImageWidth;
+    public final int ImageMaxHeight;
+    public final int ImageHeight;
     
+    public JUMBFUtils() {
+        try {
+            properties.load(new BufferedReader(new FileReader(propertiesPath + "Properties.properties")));
+        } catch (IOException ex) {
+            Logger.getLogger(JUMBFUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        folderName = properties.getProperty("TestFolderPath");
+        mergeFileName = properties.getProperty("MergeFile");
+        ImageWidth = Integer.parseInt(properties.getProperty("ImageWidth"));
+        ImageHeight = Integer.parseInt(properties.getProperty("ImageHeight"));
+        ImageMaxWidth = Integer.parseInt(properties.getProperty("ImageMaxWidth"));
+        ImageMaxHeight = Integer.parseInt(properties.getProperty("ImageMaxHeight"));
+        
+        System.out.println(folderName);
+        System.out.println(mergeFileName);
+        System.out.println(ImageWidth);
+        System.out.println(ImageHeight);
+        System.out.println(ImageMaxWidth);
+        System.out.println(ImageMaxHeight);
+    }
+        
     private int mergeInt(int radix, int shift, int... a) {
         int result = 0;
         for(int i = a.length - 1; i >= 0; i--) {
@@ -279,15 +312,15 @@ public class JUMBFUtils {
             
             ImageIcon image = new ImageIcon(data);
             
-            if (image.getIconHeight() > 900 || image.getIconWidth() > 1500) {
+            if (image.getIconHeight() > this.ImageMaxHeight || image.getIconWidth() > this.ImageMaxWidth) {
                 if (image.getIconWidth() > image.getIconHeight()) {
-                    int width = 1500;
+                    int width = this.ImageWidth;
                     int height = image.getIconHeight()*width/image.getIconWidth();
                     Image aux = new ImageIcon(data).getImage();
                     Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
                     label.setIcon(new ImageIcon(scaled));
                 } else {
-                    int height = 900;
+                    int height = this.ImageHeight;
                     int width = image.getIconWidth()*height/image.getIconHeight();
                     Image aux = new ImageIcon(data).getImage();
                     Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
@@ -310,13 +343,13 @@ public class JUMBFUtils {
             
             byte[] data = box.getContentBox().getContentData();
 
-            JFrame frame = new JFrame();
+            JFrame frame = new JFrame(box.getDescriptionBox().getLabel());
             JLabel label = new JLabel(box.getDescriptionBox().getLabel());
             
             ImageIcon image = new ImageIcon(data);
             
-            if (image.getIconWidth() > 1500) {
-                int width = 1200;
+            if (image.getIconWidth() > this.ImageMaxWidth) {
+                int width = this.ImageWidth;
                 int height = image.getIconHeight()*width/image.getIconWidth();
                 Image aux = new ImageIcon(data).getImage();
                 Image scaled = aux.getScaledInstance(width, height , java.awt.Image.SCALE_SMOOTH);
