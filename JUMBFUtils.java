@@ -374,7 +374,7 @@ public class JUMBFUtils {
         byte[] image = Files.readAllBytes(Paths.get(imageName));
         byte[] jumbf = Files.readAllBytes(Paths.get(fileName));
         
-        File file = new File(mergeFileName);
+        File file = new File(this.folderName + mergeFileName + ".jpeg");
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
